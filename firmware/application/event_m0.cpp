@@ -344,8 +344,16 @@ void EventDispatcher::handle_encoder() {
 	const uint32_t encoder_now = get_encoder_position();
 	const int32_t delta = static_cast<int32_t>(encoder_now - encoder_last);
 	encoder_last = encoder_now;
-	const auto event = static_cast<ui::EncoderEvent>(delta);
-	event_bubble_encoder(event);
+
+	// Discards every other encoder input. Fix for wrong encoder used on some Portapack H2 units which send 2 inputs per encoder detent.
+	if( dump_msg == 1 ) {
+		const auto event = static_cast<ui::EncoderEvent>(delta);
+		event_bubble_encoder(event);
+		dump_msg = 0;
+		return;
+	}
+
+	dump_msg = 1;
 }
 
 void EventDispatcher::handle_touch() {

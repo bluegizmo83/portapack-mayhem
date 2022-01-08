@@ -95,6 +95,7 @@ private:
 	ui::Painter painter;
 	ui::Context& context;
 	uint32_t encoder_last = 0;
+	uint32_t dump_msg = 0;	//Used for encoder fix
 	static bool is_running;
 	bool sd_card_present = false;
 	static bool display_sleep;
