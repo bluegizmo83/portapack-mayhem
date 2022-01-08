@@ -455,20 +455,26 @@ void ScannerView::on_statistics_update(const ChannelStatistics& statistics) {
 		{
 			timer = 0;
 			scan_resume();
-		}
-		if (statistics.max_db > squelch ) {  		//There is something on the air...(statistics.max_db > -squelch) 
-			if (scan_thread->is_freq_lock() >= MAX_FREQ_LOCK) { //checking time reached
-				scan_pause();
-				timer = 0;	
-			} else {
-				scan_thread->set_freq_lock( scan_thread->is_freq_lock() + 1 ); //in lock period, still analyzing the signal
+		} 
+		else if (!timer) 
+		{
+			if (statistics.max_db > squelch ) {  		//There is something on the air...(statistics.max_db > -squelch) 
+				if (scan_thread->is_freq_lock() >= MAX_FREQ_LOCK) { //checking time reached
+					scan_pause();
+					timer++;	
+				} else {
+					scan_thread->set_freq_lock( scan_thread->is_freq_lock() + 1 ); //in lock period, still analyzing the signal
+				}
+			} else {									//There is NOTHING on the air
+				if (scan_thread->is_freq_lock() > 0) {	//But are we already in freq_lock ?
+					big_display.set_style(&style_grey);	//Back to grey color
+					scan_thread->set_freq_lock(0); 		//Reset the scanner lock, since there is no signal
+				}				
 			}
-		} else {									//There is NOTHING on the air
-			if (scan_thread->is_freq_lock() > 0) {	//But are we already in freq_lock ?
-				big_display.set_style(&style_grey);	//Back to grey color
-				scan_thread->set_freq_lock(0); 		//Reset the scanner lock, since there is no signal
-			}
-			timer++;
+		} 
+		else 	//Ongoing wait time
+		{
+				timer++;
 		}
 	}
 }
@@ -478,7 +484,6 @@ void ScannerView::scan_pause() {
 		scan_thread->set_freq_lock(0); 		//Reset the scanner lock (because user paused, or MAX_FREQ_LOCK reached) for next freq scan	
 		scan_thread->set_scanning(false); // WE STOP SCANNING
 		audio::output::start();
-		on_headphone_volume_changed(field_volume.value());
 	}
 }
 
